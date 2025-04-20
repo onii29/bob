@@ -7,31 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function UploadPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [isAnalyzeActive, setIsAnalyzeActive] = useState(false); // State to track if analyze button is active
   const router = useRouter();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      setIsAnalyzeActive(true); // Enable analyze button when a file is selected
-    } else {
-      setFile(null);
-      setIsAnalyzeActive(false); // Disable analyze button if no file is selected
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!file) {
-      alert('Please select a file.');
-      return;
-    }
-
-    // In a real application, you would upload the file to a server here.
-    console.log('File to upload:', file);
-    alert('File uploaded (mock). Check console for file details.');
-  };
 
   const handleLogout = () => {
     // Redirect to the landing page
@@ -52,20 +28,9 @@ export default function UploadPage() {
         <p className="text-gray-700 mb-4 text-center">
           Please upload a CSV file containing customer reviews.
         </p>
-        <div className="mb-4">
-          <label htmlFor="reviewFile" className="block text-sm font-medium text-gray-700">
-            Choose File
-          </label>
-          <Input
-            type="file"
-            id="reviewFile"
-            accept=".csv"
-            className="file:bg-blue-500 file:border-0 file:text-white file:font-bold hover:file:bg-blue-700"
-            onChange={handleFileChange}
-          />
-        </div>
-        <Button onClick={handleAnalyze} disabled={!isAnalyzeActive} className="w-full" >
-          Analyze
+        
+        <Button onClick={() => router.push('/dashboard')} className="w-full" >
+            Go to Dashboard
         </Button>
         <p className="text-red-500 mt-4 text-sm text-center">
           Please provide a review file with less than 100 reviews. This prototype uses a free API key, which can be slow.

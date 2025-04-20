@@ -1,5 +1,6 @@
 'use client';
 
+import ReviewAnalyzer from '@/components/ReviewAnalyzer';
 import Link from 'next/link';
 
 export default function Dashboard() {
@@ -25,6 +26,7 @@ export default function Dashboard() {
           <p className="text-gray-700 text-lg">
             This is a placeholder dashboard.
           </p>
+          <ReviewAnalyzer />
         </section>
       </main>
       <footer className="bg-gray-900 text-gray-300 py-12">

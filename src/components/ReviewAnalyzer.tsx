@@ -88,12 +88,12 @@ export default function ReviewAnalyzer() {
         }
 
       setProgress("Fetching analysis…");
-      const data = JSON.parse(text);
-      console.log("📑 analysis result:", data);
+      const result = JSON.parse(text);
+      console.log("📑 analysis result:", result);
 
-      setResults(data);
+      setResults(result);
       setProgress("Rendering results");
-      toast({ title: "Success", description: "Analysis complete", });
+      toast({ title: "Success", description: "Analysis complete" });
     } catch (err: any) {
       console.error("❌ handleAnalyze error:", err);
       const msg = err.message || "An error occurred";

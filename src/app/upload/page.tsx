@@ -39,6 +39,7 @@ export default function UploadPage() {
             type="file"
             id="reviewFile"
             accept=".csv"
+            className="file:bg-blue-500 file:border-0 file:text-white file:font-bold hover:file:bg-blue-700"
             onChange={handleFileChange}
           />
         </div>

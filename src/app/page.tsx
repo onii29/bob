@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
 import {useState} from "react";
@@ -76,7 +75,7 @@ export default function LandingPage() {
 
             </div>
             <div className="md:block hidden">
-              <Image
+              <img
                 src={placeholderImageUrl}
                 alt="Analytics Dashboard"
                 width={800}

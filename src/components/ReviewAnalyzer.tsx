@@ -4,6 +4,8 @@ import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import SentimentBar from "@/components/charts/SentimentBar";
+import InsightHistogram from "@/components/charts/InsightHistogram";
 
 // how many rows to parse
 const CSV_PREVIEW_LIMIT = 100;
@@ -131,20 +133,29 @@ export default function ReviewAnalyzer() {
       </Button>
 
             {results && (
-        <pre className="mt-4 p-4 bg-gray-100">
-          {JSON.stringify(results, null, 2)}
-        </pre>
-      )}
-
-      {error && <p className="text-red-600">{error}</p>}
-
-      {results && (
-        <div className="space-y-6">
-          <h3>Sentiment Distribution</h3>
-          {/* <SentimentBar data={results.sentimentCounts} /> */}
-
-          <h3>Insight Length Histogram</h3>
-          {/* <InsightHistogram data={results.insightLengths} /> */}
+        <div className="mt-6 space-y-6">
+          {/* 1. Sentiment counts bar chart */}
+          <div>
+            <h3 className="font-semibold">Sentiment Distribution</h3>
+            <SentimentBar data={results.sentimentCounts} />
+          </div>
+    
+          {/* 2. Insight‑length histogram */}
+          <div>
+            <h3 className="font-semibold">Insight Length Histogram</h3>
+            <InsightHistogram data={results.insightLengths} />
+          </div>
+    
+          {/* 3. Delighters summary */}
+          <div>
+            <h3 className="font-semibold">Delighters</h3>
+            <pre className="whitespace-pre-wrap bg-gray-100 p-2 rounded">
+              {results.delightersSummary}
+            </pre>
+          </div>
+    
+          {/* 4. Detractors summary */}
+          <div>
 
           <h3>Delighters</h3>
           <pre>{results.delightersSummary}</pre>

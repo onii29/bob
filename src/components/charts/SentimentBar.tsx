@@ -1,19 +1,21 @@
-// src/components/charts/SentimentBar.tsx
-import React from 'react';
+import { Bar } from "react-chartjs-2";
 
-interface SentimentBarProps {
-  data: Record<string, number>;
+export default function SentimentBar({ data }: { data: Record<string, number> }) {
+  return (
+    <Bar
+      data={{
+        labels: Object.keys(data),
+        datasets: [{ label: "Count", data: Object.values(data) }],
+      }}
+      options={{ responsive: true }}
+    />
+  );
 }
 
-const SentimentBar: React.FC<SentimentBarProps> = ({ data }) => {
-  // Placeholder implementation
-  return (
-    <div>
-      {/* Placeholder for Sentiment Bar Chart */}
-      <p>Sentiment Bar Chart Placeholder</p>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
-    </div>
-  );
-};
-
-export default SentimentBar;
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement
+} from 'chart.js';
+ChartJS.register(CategoryScale,LinearScale,BarElement);

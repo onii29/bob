@@ -1,6 +1,7 @@
 'use client';
 
 import ReviewAnalyzer from '@/components/ReviewAnalyzer';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function Dashboard() {
@@ -18,15 +19,12 @@ export default function Dashboard() {
           </nav>
         </div>
       </header>
-      <main className="flex-1 bg-gray-100">
-        <section className="container mx-auto py-24">
-          <h1 className="text-4xl font-extrabold text-blue-900 mb-4">
-            Welcome to the Dashboard!
-          </h1>
-          <p className="text-gray-700 text-lg">
-            This is a placeholder dashboard.
-          </p>
+      <main className="flex-1 bg-gray-100 p-4 flex flex-col">
+        <section className="container mx-auto flex-1 flex flex-col">
           <ReviewAnalyzer />
+          <Button className="self-end mt-4" onClick={() => console.log('logout')}>
+            Logout
+          </Button>
         </section>
       </main>
       <footer className="bg-gray-900 text-gray-300 py-12">

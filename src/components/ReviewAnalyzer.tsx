@@ -38,6 +38,8 @@ async function fetchWithTimeout(input: RequestInfo, init: RequestInit & { timeou
 }
 
 export default function ReviewAnalyzer() {
+  console.log("🛠️ ReviewAnalyzer mounted");
+
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
@@ -50,6 +52,7 @@ export default function ReviewAnalyzer() {
   };
 
   const handleAnalyze = async () => {
+    console.log("🔍 handleAnalyze fired, file =", file);
     if (!file) {
       toast({ title: "Error", description: "Please upload a CSV first", variant: "destructive" });
       return;
@@ -67,15 +70,23 @@ export default function ReviewAnalyzer() {
       console.log("➡️ Reviews sample:", reviews.slice(0, 5));
 
       setProgress("Analyzing sentiments…");
-      const res = await fetchWithTimeout("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviews }),
-        timeout: FETCH_TIMEOUT,
-      });
-      console.log("📬 /api/analyze status:", res.status);
-      if (!res.ok) throw new Error(`Server responded ${res.status}`);
-
+      
+      console.log("🔗 Sending fetch…");
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reviews }),
+        });
+        console.log("📬 Response status:", res.status);
+        const text = await res.text();
+        console.log("📄 Response body:", text);
+        if (!res.ok) {
+          const message = `HTTP ${res.status}`;
+          console.error("❌ Full error in handleAnalyze:", message);
+          toast({ title: "Error", description: message, variant: "destructive" });
+          throw new Error(message);
+        }
+      const json = JSON.parse(text);
       setProgress("Fetching analysis…");
       const json = await res.json();
       console.log("📑 analysis result:", json);
@@ -85,7 +96,9 @@ export default function ReviewAnalyzer() {
       toast({ title: "Success", description: "Analysis complete" });
     } catch (err: any) {
       console.error("❌ handleAnalyze error:", err);
-      const msg = err.name === "AbortError" ? "Request timed out" : err.message;
+      const msg = err.message || "An error occurred";
+      
+
       setError(msg);
       toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
@@ -104,7 +117,10 @@ export default function ReviewAnalyzer() {
       />
 
       <Button
-        onClick={handleAnalyze}
+        onClick={() => {
+          console.log("🔘 Button clicked");
+          handleAnalyze();
+        }}
         disabled={!file || loading}
       >
         {loading ? progress : "Analyze Reviews"}

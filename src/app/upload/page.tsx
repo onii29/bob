@@ -1,41 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React from "react";
+import { useToast } from "@/hooks/use-toast";
+import ReviewAnalyzer from "@/components/ReviewAnalyzer";
+import { Button } from "@/components/ui/button";
 
 export default function UploadPage() {
-  const router = useRouter();
-
-  const handleLogout = () => {
-    // Redirect to the landing page
-    router.push('/');
-  };
+  const { toast } = useToast();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gray-50 py-10">
-      {/* Logout Button */}
-      <div className="w-full max-w-md flex justify-end px-8">
-        <Button variant="outline" size="sm" onClick={handleLogout}>
+      {/* Header & Logout */}
+      <div className="w-full max-w-md flex justify-between px-8 mb-6">
+        <h1 className="text-2xl font-semibold">BlueKaktus Analytics</h1>
+        <Button variant="outline" size="sm" onClick={() => window.location.href = "/"}>
           Logout
         </Button>
       </div>
 
+      {/* Analysis Component */}
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-4 text-center">Analyze Customer Reviews</h1>
-        <p className="text-gray-700 mb-4 text-center">
-          Click the button below to proceed to the review analysis dashboard. Ensure you have a CSV file ready for upload there.
-        </p>
-        
-        <Button onClick={() => router.push('/dashboard')} className="w-full" >
-            Go to Dashboard
-        </Button>
-        <p className="text-red-500 mt-4 text-sm text-center">
-          Please provide a review file with less than 100 reviews. This prototype uses a free API key, which can be slow.
-        </p>
+        <ReviewAnalyzer />
       </div>
+
+      {/* Note */}
+      <p className="text-red-500 mt-4 text-sm text-center">
+        Please use a CSV with fewer than 100 reviews. This prototype is rate‑limited and may be slow.
+      </p>
     </div>
   );
 }

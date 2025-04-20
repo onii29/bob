@@ -163,7 +163,6 @@ export default function ReviewAnalyzer() {
           <h3>Detractors</h3>
           <pre>{results.detractorsSummary}</pre>
         </div>
-      )}
     </div>
   );
 }

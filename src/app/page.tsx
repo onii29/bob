@@ -6,8 +6,6 @@ import {useState} from "react";
 import {useRouter} from "next/navigation";
 import {Input} from "@/components/ui/input";
 
-const placeholderImageUrl = 'https://picsum.photos/800/600';
-
 export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,9 +13,9 @@ export default function LandingPage() {
 
   const handleLogin = () => {
     // Dummy authentication logic
-    if (email === 'demo@example.com' && password === 'password') {
+    if (email && password) {
       // Redirect to a placeholder dashboard
-      router.push('/dashboard');
+      router.push('/upload');
     } else {
       alert('Invalid credentials');
     }
@@ -75,13 +73,7 @@ export default function LandingPage() {
 
             </div>
             <div className="md:block hidden">
-              <img
-                src={placeholderImageUrl}
-                alt="Analytics Dashboard"
-                width={800}
-                height={600}
-                className="rounded-lg shadow-xl"
-              />
+              <div>Placeholder Image</div>
             </div>
           </div>
         </section>

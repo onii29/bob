@@ -6,20 +6,12 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(req: Request) {
   const { review, sentiment } = await req.json();
-  // Skip neutral
-  if (sentiment === "Neutral") {
-    return new Response("", {
-      status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
-  }
+  if (sentiment === "Neutral") return new Response("", { status: 200 });
 
   const prompt = `
-You are an AI assistant that reads customer reviews and produces a short, actionable insight.
-
-Instructions:
-• If the review is positive, describe what went well (1–2 sentences).
-• If it’s negative, describe the complaint and one concrete improvement suggestion (1–2 sentences).
+You are an AI assistant that extracts a short, actionable insight from a customer review of a clothing brand.
+• If positive: 1–2 sentences describing what went well.
+• If negative: 1–2 sentences describing the problem and one way the brand can improve.
 
 Review: ${review}
   `.trim();

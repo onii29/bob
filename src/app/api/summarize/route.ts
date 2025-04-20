@@ -5,21 +5,27 @@ import { NextResponse } from "next/server";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(req: Request) {
-  const { role, insights } = await req.json();
-  const bullets = (insights as string[])
-    .map((i) => `- ${i}`)
-    .join("\n");
+  const { role, insights } = await req.json() as {
+    role: "Delighters" | "Detractors";
+    insights: string[];
+  };
+  const bullets = insights.map(i => `- ${i}`).join("\n");
 
-  const prompt = `
-You are summarizing a list of ${role.toLowerCase()} insights for a business owner.
-
-Instructions:
-• Format as up to 5 bullet points (each starting with "- ").
-• No extra text.
+  const prompt = role === "Delighters" 
+    ? `
+You are summarizing what customers love about a clothing brand.
+Format as bullet points titled "Delighters".
 
 Insights:
 ${bullets}
-  `.trim();
+    `.trim()
+    : `
+You are summarizing what needs improvement for a clothing brand.
+Format as bullet points titled "Detractors" with actionable recommendations.
+
+Insights:
+${bullets}
+    `.trim();
 
   const resp = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",

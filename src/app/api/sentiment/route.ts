@@ -7,15 +7,13 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export async function POST(req: Request) {
   const { review } = await req.json();
   const prompt = `
-You are a sentiment classifier.
-Given a single customer review, respond with exactly one of these tokens:
-- Positive
-- Negative
-- Neutral
-
-Remember to respond with just the sentiment tag without any pre or post explanation.
+You are a sentiment classifier for a clothing brand.
+Return exactly one token: Positive, Negative, or Neutral.
+Remember to respond with just the sentiment tag—no extra words.
 
 Review: ${review}
+  `.trim();
+
   `.trim();
 
   const resp = await groq.chat.completions.create({

@@ -24,9 +24,9 @@ export default function UploadPage() {
       </div>
 
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-4 text-center">Upload Customer Reviews</h1>
+        <h1 className="text-2xl font-semibold mb-4 text-center">Analyze Customer Reviews</h1>
         <p className="text-gray-700 mb-4 text-center">
-          Please upload a CSV file containing customer reviews.
+          Click the button below to proceed to the review analysis dashboard. Ensure you have a CSV file ready for upload there.
         </p>
         
         <Button onClick={() => router.push('/dashboard')} className="w-full" >

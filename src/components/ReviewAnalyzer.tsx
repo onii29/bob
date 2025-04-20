@@ -43,7 +43,7 @@ export default function ReviewAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<any>(null);  
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -87,13 +87,17 @@ export default function ReviewAnalyzer() {
           throw new Error(message);
         }
 
-      setProgress("Fetching analysis…");
-      const result = JSON.parse(text);
-      console.log("📑 analysis result:", result);
+        console.log("📑 Parsing response...");
+        console.log("📄 Raw response text:", text);
 
-      setResults(result);
-      setProgress("Rendering results");
-      toast({ title: "Success", description: "Analysis complete" });
+        try {
+          const result = JSON.parse(text);
+          console.log("📑 analysis result:", result);
+          setResults(result);
+          setProgress("Rendering results");
+        } catch (parseError) {
+          console.error("❌ JSON parsing error:", parseError);
+        }
     } catch (err: any) {
       console.error("❌ handleAnalyze error:", err);
       const msg = err.message || "An error occurred";
@@ -120,11 +124,17 @@ export default function ReviewAnalyzer() {
         onClick={() => {
           console.log("🔘 Button clicked");
           handleAnalyze();
-        }}
+        }} 
         disabled={!file || loading}
       >
         {loading ? progress : "Analyze Reviews"}
       </Button>
+
+            {results && (
+        <pre className="mt-4 p-4 bg-gray-100">
+          {JSON.stringify(results, null, 2)}
+        </pre>
+      )}
 
       {error && <p className="text-red-600">{error}</p>}
 

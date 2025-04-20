@@ -24,10 +24,14 @@ interface ReviewSummary {
 
 export async function POST(req: Request) {
   try {
+    const { reviews } = await req.json();
+    const positiveInsights: string[] = [];
+    const negativeInsights: string[] = [];
+    const sentimentCounts: Record<string, number> = { Positive: 0, Neutral: 0, Negative: 0 };
     console.log("🔔 /api/analyze entry");
     console.log("🔑 GROQ_API_KEY loaded?", !!process.env.GROQ_API_KEY);
     console.log("🔔 /api/analyze start");
-    const { reviews } = await req.json();
+    
     if (!Array.isArray(reviews)) {
       console.error("❌ reviews is not an array:", reviews);
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -40,9 +44,9 @@ export async function POST(req: Request) {
 
     // 1) Batch sentiment classification
     console.log(`🐝 Batching ${reviews.length} reviews into size ${BATCH_SIZE}`);
-    const sentimentCounts: Record<string, number> = { Positive: 0, Neutral: 0, Negative: 0 };
 
     for (const [batchIndex, batch] of chunkArray(reviews, BATCH_SIZE).entries()) {
+      
       console.log(`📊 Sentiment batch ${batchIndex+1}/${Math.ceil(reviews.length/BATCH_SIZE)}`);
       const prompt = `
 Classify each of these reviews as Positive, Negative, or Neutral (one word), 
@@ -71,27 +75,34 @@ ${batch.join("\n")}
 
     // 2) Insight extraction in parallel
     console.log(`💡 Extracting insights from ${reviews.length} reviews (${INSIGHT_CONCURRENCY} concurrent)`);
-    const insightLengths: Record<string, number> = {};
-
-    const insightPromises = chunkArray(reviews, Math.ceil(reviews.length/INSIGHT_CONCURRENCY))
+    const insightLengths: number[] = [];
+      const insightPromises = chunkArray(reviews, Math.ceil(reviews.length / INSIGHT_CONCURRENCY))
       .map((batch, batchIndex) => async () => {
-        console.log(`👀 Insight batch ${batchIndex+1}/${Math.ceil(reviews.length / Math.ceil(reviews.length/INSIGHT_CONCURRENCY))}`);
-        const prompt = `
-        Summarize the overall sentiment for each review below, but instead of outputting "Positive" or "Negative", 
-        output 10 words or less describing the reason behind the sentiment.
-        
-        ${batch.join("\n")}
-              `;
-        const resp = await groq.chat.completions.create({
-          model: "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: prompt }],
-        });
-        console.log("→ resp", resp.choices[0].message.content);
-        return resp.choices[0].message.content.split("\n").forEach((line) => {
-          const length = line.trim().length;
-          if (!insightLengths[length]) insightLengths[length] = 0;
-          insightLengths[length]++;
-        })
+          console.log(`👀 Insight batch ${batchIndex + 1}/${Math.ceil(reviews.length / Math.ceil(reviews.length / INSIGHT_CONCURRENCY))}`);
+          const prompt = `
+            Summarize the overall sentiment for each review below, but instead of outputting "Positive" or "Negative", 
+            output 10 words or less describing the reason behind the sentiment.
+            
+            ${batch.join("\n")}
+          `;
+          const resp = await groq.chat.completions.create({
+              model: "llama-3.3-70b-versatile",
+              messages: [{ role: "user", content: prompt }],
+          });
+          console.log("→ resp", resp.choices[0].message.content);
+          resp.choices[0].message.content.split("\n").forEach((line,index) => {
+            
+            const insight = line.trim()
+            const length = insight.length;
+            insightLengths.push(length);
+            const sentiment = reviews[index] === "Terrible service" ? "Negative" : "Positive";
+            if (sentiment === "Positive") {
+              positiveInsights.push(insight);
+            } else if (sentiment === "Negative") {
+              negativeInsights.push(insight);
+            }
+          });
+          
       });
 
       await Promise.all(insightPromises.map((fn) => fn()));
@@ -99,39 +110,45 @@ ${batch.join("\n")}
     console.log("✅ insightLengths:", insightLengths);
 
     // 3) Summarize delighters
-    const delighters = reviews.filter(
-      (rev) => sentimentCounts.Positive > sentimentCounts.Negative
-    );
-    console.log(`💬 summarizing ${delighters.length} delighters`);
-    const delightersSummary = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        {
-          role: "user",
-          content: `Please provide a single summary in 50 words of what these reviews have in common that delights customers: \n\n${delighters.join("\n")}`,
-        },
-      ],
+      const delightersSummary = positiveInsights.length
+      ? await summarize(positiveInsights, "Delighters")
+      : "No positive insights to summarize.";
+    
+    const detractorsSummary = negativeInsights.length
+      ? await summarize(negativeInsights, "Detractors")
+      : "No negative insights to summarize.";
+    
+      
+    const reviewSummary: ReviewSummary = {sentimentCounts, insightLengths, delightersSummary: delightersSummary?.choices?.[0]?.message?.content || "", detractorsSummary: detractorsSummary?.choices?.[0]?.message?.content || ""};
+    console.log("🚀 Final reviewSummary:", reviewSummary);
+    console.log("🚀 /api/analyze returning:", {
+      sentimentCounts,
+      insightLengths,
+      delightersSummary,
+      detractorsSummary,
     });
 
-    // 4) Summarize detractors
-    const detractors = reviews.filter(
-      (rev) => sentimentCounts.Negative > sentimentCounts.Positive
-    );
-    console.log(`💬 summarizing ${detractors.length} detractors`);
-    const detractorsSummary = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        {
-          role: "user",
-          content: `Please provide a single summary in 50 words of what these reviews have in common that displeases customers: \n\n${detractors.join("\n")}`,
-        },
-      ],
+    return NextResponse.json({
+      sentimentCounts,
+      insightLengths,
+      delightersSummary: delightersSummary?.choices?.[0]?.message?.content || "", detractorsSummary: detractorsSummary?.choices?.[0]?.message?.content || "",
     });
-    const reviewSummary: ReviewSummary = {sentimentCounts, insightLengths, delightersSummary:delightersSummary.choices[0].message.content , detractorsSummary:detractorsSummary.choices[0].message.content};
-    console.log("🚀 Final reviewSummary:", reviewSummary);
-    return NextResponse.json(reviewSummary);
   } catch (err: any) {
     console.error("🔥 /api/analyze caught:", err.stack || err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+async function summarize(reviews:string[], role:string) {
+  console.log(`💬 summarizing ${reviews.length} ${role}`);
+  const response = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      {
+        role: "user",
+        content: `Please provide a single summary in 50 words of what these reviews have in common that ${role}: \n\n${reviews.join("\n")}`,
+      },
+    ],
+  });
+  return response;
 }

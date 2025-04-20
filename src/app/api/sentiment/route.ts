@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 You are a sentiment classifier for a clothing brand.
 
 • If the customer says anything negative, critical, or suggests an improvement, return Negative.
-• If the everything in the customer review is positive only then return Positive
+• If the everything in the customer review is positive only then retun Positive
 • Otherwise, return Neutral.
 
 Respond with exactly one word: Positive, Negative, or Neutral. No extra words.

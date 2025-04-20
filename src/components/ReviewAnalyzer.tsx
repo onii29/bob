@@ -1,51 +1,17 @@
+// src/components/ReviewAnalyzer.tsx
 "use client";
+
 import React, { useState } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import SentimentBar from "@/components/charts/SentimentBar";
-import InsightHistogram from "@/components/charts/InsightHistogram";
-
-// how many rows to parse
-const CSV_PREVIEW_LIMIT = 100;
-// how long to wait before aborting fetch
-const FETCH_TIMEOUT = 60000;
-
-// 1) Wrap Papa.parse in a Promise so we can await it
-function parseCSV(file: File): Promise<any[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      header: true,
-      preview: CSV_PREVIEW_LIMIT,
-      complete: (results) => resolve(results.data),
-      error: (err) => reject(err),
-    });
-  });
-}
-
-// 2) A simple fetch with timeout/abort
-async function fetchWithTimeout(input: RequestInfo, init: RequestInit & { timeout?: number } = {}) {
-  const { timeout = FETCH_TIMEOUT, ...rest } = init;
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  try {
-    const res = await fetch(input, { ...rest, signal: controller.signal });
-    clearTimeout(id);
-    return res;
-  } catch (err) {
-    clearTimeout(id);
-    throw err;
-  }
-}
 
 export default function ReviewAnalyzer() {
-  console.log("🛠️ ReviewAnalyzer mounted");
-
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
-  const [results, setResults] = useState<any>(null);  
+  const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -54,7 +20,6 @@ export default function ReviewAnalyzer() {
   };
 
   const handleAnalyze = async () => {
-    console.log("🔍 handleAnalyze fired, file =", file);
     if (!file) {
       toast({ title: "Error", description: "Please upload a CSV first", variant: "destructive" });
       return;
@@ -62,51 +27,39 @@ export default function ReviewAnalyzer() {
 
     setLoading(true);
     setError(null);
+
     try {
       setProgress("Parsing CSV…");
-      const data = await parseCSV(file);
-      console.log("✅ CSV parsed:", data.length, "rows");
+      const data: any[] = await new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          preview: 100,
+          complete: ({ data }) => resolve(data),
+          error: (err) => reject(err),
+        });
+      });
 
       setProgress("Extracting reviews…");
-      const reviews = data.map((r: any) => r.Review);
-      console.log("➡️ Reviews sample:", reviews.slice(0, 5));
+      const reviews = data.map((r) => r.Review);
 
       setProgress("Analyzing sentiments…");
-      
-      console.log("🔗 Sending fetch…");
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reviews }),
-        });
-        console.log("📬 Response status:", res.status);
-        const text = await res.text();
-        console.log("📄 Response body:", text);
-        if (!res.ok) {
-          const message = `HTTP ${res.status}`;
-          console.error("❌ Full error in handleAnalyze:", message);
-          toast({ title: "Error", description: message, variant: "destructive" });
-          throw new Error(message);
-        }
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews }),
+      });
 
-        console.log("📑 Parsing response...");
-        console.log("📄 Raw response text:", text);
+      setProgress("Fetching analysis…");
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || `HTTP ${res.status}`);
 
-        try {
-          const result = JSON.parse(text);
-          console.log("📑 analysis result:", result);
-          setResults(result);
-          setProgress("Rendering results");
-        } catch (parseError) {
-          console.error("❌ JSON parsing error:", parseError);
-        }
+      setResults(payload);
+      setProgress("Rendering results");
+      toast({ title: "Success", description: "Analysis complete" });
     } catch (err: any) {
-      console.error("❌ handleAnalyze error:", err);
-      const msg = err.message || "An error occurred";
-      
-
-      setError(msg);
-      toast({ title: "Error", description: msg, variant: "destructive" });
+      console.error("ReviewAnalyzer error:", err);
+      setError(err.message);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -120,49 +73,34 @@ export default function ReviewAnalyzer() {
         type="file"
         accept=".csv"
         onChange={handleFileChange}
+        className="block"
       />
 
-      <Button
-        onClick={() => {
-          console.log("🔘 Button clicked");
-          handleAnalyze();
-        }} 
-        disabled={!file || loading}
-      >
+      {error && <p className="text-red-600">{error}</p>}
+
+      <Button type="button" onClick={handleAnalyze} disabled={!file || loading}>
         {loading ? progress : "Analyze Reviews"}
       </Button>
 
-            {results && (
-        <div className="mt-6 space-y-6">
-          {/* 1. Sentiment counts bar chart */}
-          <div>
-            <h3 className="font-semibold">Sentiment Distribution</h3>
-            <SentimentBar data={results.sentimentCounts} />
-          </div>
-    
-          {/* 2. Insight‑length histogram */}
-          <div>
-            <h3 className="font-semibold">Insight Length Histogram</h3>
-            <InsightHistogram data={results.insightLengths} />
-          </div>
-    
-          {/* 3. Delighters summary */}
-          <div>
-            <h3 className="font-semibold">Delighters</h3>
-            <pre className="whitespace-pre-wrap bg-gray-100 p-2 rounded">
-              {results.delightersSummary}
-            </pre>
-          </div>
-    
-          {/* 4. Detractors summary */}
-          <div>
+      {results && (
+        <div className="space-y-6 mt-6">
+          <h3 className="text-lg font-medium">Sentiment Distribution</h3>
+          {/* <SentimentBar data={results.sentimentCounts} /> */}
 
-          <h3>Delighters</h3>
-          <pre>{results.delightersSummary}</pre>
+          <h3 className="text-lg font-medium">Insight Length Histogram</h3>
+          {/* <InsightHistogram data={results.insightLengths} /> */}
 
-          <h3>Detractors</h3>
-          <pre>{results.detractorsSummary}</pre>
+          <h3 className="text-lg font-medium">Delighters</h3>
+          <pre className="whitespace-pre-wrap bg-gray-100 p-2 rounded">
+            {results.delightersSummary}
+          </pre>
+
+          <h3 className="text-lg font-medium">Detractors</h3>
+          <pre className="whitespace-pre-wrap bg-gray-100 p-2 rounded">
+            {results.detractorsSummary}
+          </pre>
         </div>
+      )}
     </div>
   );
 }

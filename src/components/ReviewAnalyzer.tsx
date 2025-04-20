@@ -1,6 +1,4 @@
-// src/components/ReviewAnalyzer.tsx
 "use client";
-
 import React, { useState } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
@@ -24,21 +22,19 @@ export default function ReviewAnalyzer() {
       toast({ title: "Error", description: "Please upload a CSV first", variant: "destructive" });
       return;
     }
-
     setLoading(true);
     setError(null);
 
     try {
       setProgress("Parsing CSV…");
-      const data: any[] = await new Promise((resolve, reject) => {
+      const data: any[] = await new Promise((resolve, reject) =>
         Papa.parse(file, {
           header: true,
           preview: 100,
           complete: ({ data }) => resolve(data),
           error: (err) => reject(err),
-        });
-      });
-
+        })
+      );
       setProgress("Extracting reviews…");
       const reviews = data.map((r) => r.Review);
 
@@ -53,6 +49,7 @@ export default function ReviewAnalyzer() {
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || `HTTP ${res.status}`);
 
+      console.log("🚀 Analysis payload:", payload);
       setResults(payload);
       setProgress("Rendering results");
       toast({ title: "Success", description: "Analysis complete" });
@@ -85,10 +82,10 @@ export default function ReviewAnalyzer() {
       {results && (
         <div className="space-y-6 mt-6">
           <h3 className="text-lg font-medium">Sentiment Distribution</h3>
-          {/* <SentimentBar data={results.sentimentCounts} /> */}
+          <SentimentBar data={results.sentimentCounts} />
 
           <h3 className="text-lg font-medium">Insight Length Histogram</h3>
-          {/* <InsightHistogram data={results.insightLengths} /> */}
+          <InsightHistogram data={results.insightLengths} />
 
           <h3 className="text-lg font-medium">Delighters</h3>
           <pre className="whitespace-pre-wrap bg-gray-100 p-2 rounded">

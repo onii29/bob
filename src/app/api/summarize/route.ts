@@ -1,4 +1,6 @@
+// src/app/api/summarize/route.ts
 import Groq from "groq-sdk";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const { role, insights } = await req.json() as {
@@ -6,31 +8,21 @@ export async function POST(req: Request) {
     insights: string[];
   };
 
-  const bullets = insights.map((i) => `- ${i}`).join("\n");
+  const bullets = insights.map(i => `- ${i}`).join("\n");
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-  const prompt = role === "Delighters"
-    ? `
-You are summarizing what customers love about a clothing brand based on the insights.
-Format as bullet points titled "Delighters". Make sure not to make more than 5 bullet points so stick to the point and do not halucinate
+  const prompt = `
+You are summarizing a list of actionable insights from customer reviews of a clothing brand.
+Output each item exactly as one bullet point (“- ”) with NO heading, NO title.
 
-Insights:
 ${bullets}
-    `.trim()
-    : `
-You are summarizing what needs improvement for a clothing brand based on the insights.
-Format as bullet points titled "Detractors" with actionable recommendations. Make sure not to make more than 5 bullet points so stick to the point and do not halucinate
-
-Insights:
-${bullets}
-    `.trim();
+  `.trim();
 
   const resp = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [{ role: "user", content: prompt }],
   });
-
   const summary = resp.choices[0].message.content.trim();
-  return new Response(summary, {
+  return new NextResponse(summary, {
     status: 200,
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });

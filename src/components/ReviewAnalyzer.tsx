@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import SentimentBar from "@/components/charts/SentimentBar";
 
-const RATE_LIMIT = 4000; // 1 call per 4 seconds (~15/min)
+const RATE_LIMIT = 4000; // one call per 4s (~15/min)
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function ReviewAnalyzer() {
@@ -55,7 +55,7 @@ export default function ReviewAnalyzer() {
 
       // 3️⃣ Classify & extract one by one
       for (const review of reviews) {
-        // Sentiment
+        // 🔍 Sentiment
         setProgress("Classifying sentiment…");
         await sleep(RATE_LIMIT);
         const sentiment = await fetch("/api/sentiment", {
@@ -63,9 +63,13 @@ export default function ReviewAnalyzer() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ review }),
         }).then((r) => r.text());
+
+        // 📊 Log classification
+        console.log("📝 Review → Sentiment:", { review, sentiment });
+
         counts[sentiment] = (counts[sentiment] || 0) + 1;
 
-        // Insight
+        // 💡 Insight
         if (sentiment !== "Neutral") {
           setProgress("Extracting insight…");
           await sleep(RATE_LIMIT);
@@ -74,12 +78,21 @@ export default function ReviewAnalyzer() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ review, sentiment }),
           }).then((r) => r.text());
+
+          // 📥 Log returned insight
+          console.log("💡 Insight for", sentiment, ":", insight);
+
           if (insight) {
             if (sentiment === "Positive") positiveInsights.push(insight);
             else negativeInsights.push(insight);
           }
         }
       }
+
+      // 🗒️ Log accumulators before summarizing
+      console.log("✅ positiveInsights:", positiveInsights);
+      console.log("✅ negativeInsights:", negativeInsights);
+      console.log("✅ sentimentCounts:", counts);
 
       // 4️⃣ Summarize Delighters
       setProgress("Summarizing Delighters…");
@@ -141,7 +154,7 @@ export default function ReviewAnalyzer() {
 
           <h3 className="text-lg font-medium">Detractors</h3>
           <pre className="whitespace-pre-wrap bg-gray-100 p-2 rounded">
-            {results.detractorsSummary}
+            {results.detractorsSummary || "No detractors found."}
           </pre>
         </div>
       )}

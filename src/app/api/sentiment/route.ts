@@ -1,26 +1,34 @@
 // src/app/api/sentiment/route.ts
-import Groq from "groq-sdk";
 
-export async function POST(req: Request) {
-  const { review } = await req.json();
+import Groq from 'groq-sdk';
+import { NextResponse } from 'next/server';
 
+export async function POST(request: Request) {
+  // 1) Read the incoming review text
+  const { review } = await request.json();
+
+  // 2) Initialize Groq client
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+  // 3) Build the prompt
   const prompt = `
 You are a sentiment classifier for a clothing brand.
-Given one customer review, respond with exactly one token: Positive, Negative, or Neutral.
-Remember to respond with just the sentiment tag—no extra words.
+Return exactly one token: Positive, Negative, or Neutral.
+Remember to respond with just that tag—no extra words.
 
 Review: ${review}
-  `.trim();
+`.trim();
 
+  // 4) Call the LLM
   const resp = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [{ role: "user", content: prompt }],
+    model: 'llama-3.3-70b-versatile',
+    messages: [{ role: 'user', content: prompt }],
   });
 
+  // 5) Extract the answer and return as plain text
   const sentiment = resp.choices[0].message.content.trim();
-  return new Response(sentiment, {
+  return new NextResponse(sentiment, {
     status: 200,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });
 }

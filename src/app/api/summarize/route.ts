@@ -10,15 +10,15 @@ export async function POST(req: Request) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
   const prompt = role === "Delighters"
     ? `
-You are summarizing what customers love about a clothing brand.
-Format as bullet points, Make sure not to make more than 5 bullet points so stick to the point and do not halucinate
+You are summarizing what customers love about a clothing brand based on the insights.
+Format as bullet points titled "Delighters". Make sure not to make more than 5 bullet points so stick to the point and do not halucinate
 
 Insights:
 ${bullets}
     `.trim()
     : `
-You are summarizing what needs improvement for a clothing brand.
-Format as bullet points with actionable recommendations. Make sure not to make more than 5 bullet points so stick to the point and do not halucinate
+You are summarizing what needs improvement for a clothing brand based on the insights.
+Format as bullet points titled "Detractors" with actionable recommendations. Make sure not to make more than 5 bullet points so stick to the point and do not halucinate
 
 Insights:
 ${bullets}

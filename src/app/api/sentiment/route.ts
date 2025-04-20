@@ -13,8 +13,12 @@ export async function POST(request: Request) {
   // 3) Build the prompt
   const prompt = `
 You are a sentiment classifier for a clothing brand.
-Return exactly one token: Positive, Negative, or Neutral.
-Remember to respond with just that tag—no extra words.
+
+• If the customer says anything negative, critical, or suggests an improvement, return Negative.
+• If the everything in the customer review is positive only then return Positive
+• Otherwise, return Neutral.
+
+Respond with exactly one word: Positive, Negative, or Neutral. No extra words.
 
 Review: ${review}
 `.trim();

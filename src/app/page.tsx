@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
 import {BarChart3, Search, TrendingUp, ChevronRight} from 'lucide-react';
-import {LoginForm} from '@/components/login-form';
+import {LoginForm} from '../components/login-form';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {landingPageOptimization} from '@/ai/flows/landing-page-optimization';
 import {useState} from "react";
